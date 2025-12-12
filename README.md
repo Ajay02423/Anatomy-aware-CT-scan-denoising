@@ -276,3 +276,162 @@ Our training uses a novel teacher-student framework:
 ---
 
 </div>
+
+
+
+
+## 🏗️ Architecture
+
+### Training Pipeline
+
+Our model uses a teacher-student knowledge distillation approach with the following flow:
+
+- **LDCT Input**: Low-dose CT with noise at various dose levels (10-70%)
+- **Student Encoder**: Trainable encoder that learns to process noisy LDCT data
+- **Dose Conditioning**: MLP (1-64) that adapts the student encoder based on dose level
+- **Feature Map Distillation**: Layer-wise alignment of student features to teacher features
+- **Teacher Encoder**: Frozen encoder trained only on clean NDCT images
+- **Shared Decoder**: Reconstructs high-quality NDCT-like output
+
+### Inference Pipeline
+
+At inference time, only the student encoder and decoder are used:
+
+1. Input LDCT image and dose level (10-70%)
+2. Pass through Student Encoder with dose-conditioning MLP
+3. Generate latent representation compatible with teacher space
+4. Decode to produce denoised NDCT-quality output
+
+### NAFNet Encoder Architecture
+
+The encoder uses a hierarchical downsampling approach:
+
+```
+Input: (B, 512, 512)
+   ↓
+Conv Head (3×3)
+   ↓
+Down1: Stride 2, Channels→2, Conv 3×3
+   ↓
+Down2: Stride 2, Channels→4, Conv 3×3
+   ↓
+Down3: Stride 2, Channels→8, Conv 3×3
+   ↓
+NAFBlock ×8 (Progressive stride-2 downsampling with:
+  - Depthwise Conv (DWConv)
+  - SimpleGate (Efficient gating)
+  - SCA (Spatial-Channel Attention)
+  - Residual scaling)
+   ↓
+Latent Projection: Conv 1×1
+   ↓
+Output Latent Z: (B, 512, 64, 64)
+```
+
+### NAFNet Block Components
+
+Each NAFBlock combines multiple efficient components:
+
+1. **Layer Normalization**: Stabilizes features
+2. **Conv 1×1**: Channel mixing
+3. **DWConv 3×3**: Depthwise convolution for local feature extraction
+4. **SimpleGate**: Lightweight element-wise gating mechanism
+5. **SCA**: Spatial-Channel Attention with residual scaling
+6. **Residual Connection**: Skip connection for stable gradient flow
+
+**Why These Components?**
+- **DWConv + SimpleGate**: Efficient noise suppression while preserving anatomical edges
+- **SCA Attention**: Focused channel learning for selective feature importance
+- **Residual Scaling**: Stable training convergence and gradient flow
+- **Overall**: Balances efficiency with fidelity for real-time clinical deployment
+
+---
+
+## 📊 Results and Analysis
+
+### Quantitative Performance
+
+#### Performance Across Dose Levels
+
+| Dose | PSNR (dB) | SSIM  | Performance |
+|------|-----------|-------|-------------|
+| 10% | 41.06 | 0.9609 | Strong denoising, minor smoothing |
+| 25% | 42.82 | 0.9685 | Well-preserved edges, good anatomy |
+| 50% | 47.75 | 0.9908 | Near-perfect reconstruction |
+| 70% | 50.00 | 0.9999 | Excellent clinical quality |
+
+**Key Findings:**
+- Consistent +3-4 dB PSNR improvement over baseline
+- Largest gains at extreme 10% dose (34 dB baseline improvement)
+- SSIM ≥ 0.94 across all doses shows superior anatomical preservation
+- No overfitting at high doses - performance remains excellent
+
+#### Training Convergence
+
+**Teacher Network:**
+- Rapid initial drop in reconstruction loss
+- Smooth convergence to stable NDCT latent representation
+- Flattened tail indicates well-formed clean feature space
+
+**Student Network:**
+- Sharp initial decrease with successful knowledge distillation
+- Settles into steady training band with minimal variance
+- NAFNet variant achieves lower steady-state variance than ResNet/UNet baselines
+- Indicates more stable and efficient learning of distilled knowledge
+
+### Ablation Study: Architecture Comparison
+
+**NAFNet** (RECOMMENDED)
+- ✅ Efficient DWConv + SimpleGate for selective noise suppression
+- ✅ Preserves high-frequency anatomical edges and fine details
+- ✅ Lowest training variance → fastest, most stable convergence
+- ✅ Best quantitative metrics across all dose levels
+
+**ResNet Baseline**
+- ✓ Stable residual connections
+- ✗ Lacks gating mechanisms for selective feature processing
+- ✗ Over-smooths small anatomical features
+- ✗ Higher training variance than NAFNet
+
+**UNet Baseline**
+- ✓ Skip connections help structure preservation
+- ✗ Can reintroduce noise through skip pathways
+- ✗ Lacks efficient gated micro-operations
+- ✗ Slowest convergence, higher steady-state variance
+
+**Verdict**: NAFNet's combination of depthwise convolutions and gating mechanisms provides the optimal balance of noise suppression and anatomical detail preservation.
+
+### Dose-Conditioning Analysis
+
+**Finding**: NAFNet with dose-conditioning performs similarly to NAFNet without explicit dose-conditioning.
+
+**Implications:**
+- Strong anatomical priors learned during training
+- Robust dose-generalization inherent to NAFNet architecture
+- Model demonstrates understanding of noise characteristics, not just memorization
+- Dose-conditioning provides marginal additional benefit
+- Simplified models still maintain strong cross-dose performance
+
+### Qualitative Results by Dose Level
+
+**10% Dose (Extreme Noise):**
+- Input: Heavy noise, poor contrast
+- Predicted (PSNR: 41.06, SSIM: 0.9609): Strong noise reduction with acceptable smoothing
+- Assessment: Excellent denoising at most challenging dose
+
+**25% Dose (Moderate-Low):**
+- Input: Visible artifacts, degraded anatomy
+- Predicted (PSNR: 42.82, SSIM: 0.9685): Well-preserved edges and small structures
+- Assessment: Effective clinical-quality reconstruction
+
+**50% Dose (Moderate):**
+- Input: Subtle artifacts, reasonable detail
+- Predicted (PSNR: 47.75, SSIM: 0.9908): Near-NDCT quality with preserved anatomy
+- Assessment: Excellent structural and textural fidelity
+
+**70% Dose (Low Noise):**
+- Input: Minimal noise, good structure
+- Predicted (PSNR: 50.00, SSIM: 0.9999): Indistinguishable from ground truth
+- Assessment: Superior detail preservation, no artifacts
+
+---
