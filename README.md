@@ -353,12 +353,12 @@ Each NAFBlock combines multiple efficient components:
 
 #### Performance Across Dose Levels
 
-| Dose | PSNR (dB) | SSIM  | Performance |
-|------|-----------|-------|-------------|
-| 10% | 41.06 | 0.9609 | Strong denoising, minor smoothing |
-| 25% | 42.82 | 0.9685 | Well-preserved edges, good anatomy |
-| 50% | 47.75 | 0.9908 | Near-perfect reconstruction |
-| 70% | 50.00 | 0.9999 | Excellent clinical quality |
+| Metric | **10% Dose** ||||**25% Dose** ||||**50% Dose** ||||**70% Dose** |
+|--------|---|---|---|---|---|---|---|---|---|---|---|---|
+|| GT | Baseline | Current | GT | Baseline | Current | GT | Baseline | Current | GT | Baseline | Current |
+| **PSNR** | 20.34 | 37.69 | **40.81** | 34.92 | 37.42 | **39.99** | 38.28 | 38.14 | **43.42** | 33.83 | 38.19 | **44.01** |
+| **SSIM** | 0.598 | 0.903 | **0.949** | 0.808 | 0.899 | **0.941** | 0.814 | 0.914 | **0.969** | 0.841 | 0.915 | **0.973** |
+| **RMSE** | 0.0360 | 0.0132 | **0.00927** | 0.0184 | 0.0136 | **0.0102** | 0.0236 | 0.0125 | **0.00688** | 0.0224 | 0.0124 | **0.00643** |
 
 **Key Findings:**
 - Consistent +3-4 dB PSNR improvement over baseline
