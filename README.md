@@ -349,20 +349,9 @@ Each NAFBlock combines multiple efficient components:
 
 ## 📊 Results and Analysis
 
-### Quantitative Performance
-
-#### Performance Across Dose Levels
-
-| Metric | **10% Dose** ||||**25% Dose** ||||**50% Dose** ||||**70% Dose** |
-|--------|---|---|---|---|---|---|---|---|---|---|---|---|
-|| GT | Baseline | Current | GT | Baseline | Current | GT | Baseline | Current | GT | Baseline | Current |
-| **PSNR** | 20.34 | 37.69 | **40.81** | 34.92 | 37.42 | **39.99** | 38.28 | 38.14 | **43.42** | 33.83 | 38.19 | **44.01** |
-| **SSIM** | 0.598 | 0.903 | **0.949** | 0.808 | 0.899 | **0.941** | 0.814 | 0.914 | **0.969** | 0.841 | 0.915 | **0.973** |
-| **RMSE** | 0.0360 | 0.0132 | **0.00927** | 0.0184 | 0.0136 | **0.0102** | 0.0236 | 0.0125 | **0.00688** | 0.0224 | 0.0124 | **0.00643** |
 
 **Key Findings:**
 - Consistent +3-4 dB PSNR improvement over baseline
-- Largest gains at extreme 10% dose (34 dB baseline improvement)
 - SSIM ≥ 0.94 across all doses shows superior anatomical preservation
 - No overfitting at high doses - performance remains excellent
 
@@ -412,26 +401,5 @@ Each NAFBlock combines multiple efficient components:
 - Dose-conditioning provides marginal additional benefit
 - Simplified models still maintain strong cross-dose performance
 
-### Qualitative Results by Dose Level
-
-**10% Dose (Extreme Noise):**
-- Input: Heavy noise, poor contrast
-- Predicted (PSNR: 41.06, SSIM: 0.9609): Strong noise reduction with acceptable smoothing
-- Assessment: Excellent denoising at most challenging dose
-
-**25% Dose (Moderate-Low):**
-- Input: Visible artifacts, degraded anatomy
-- Predicted (PSNR: 42.82, SSIM: 0.9685): Well-preserved edges and small structures
-- Assessment: Effective clinical-quality reconstruction
-
-**50% Dose (Moderate):**
-- Input: Subtle artifacts, reasonable detail
-- Predicted (PSNR: 47.75, SSIM: 0.9908): Near-NDCT quality with preserved anatomy
-- Assessment: Excellent structural and textural fidelity
-
-**70% Dose (Low Noise):**
-- Input: Minimal noise, good structure
-- Predicted (PSNR: 50.00, SSIM: 0.9999): Indistinguishable from ground truth
-- Assessment: Superior detail preservation, no artifacts
 
 ---
